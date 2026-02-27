@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
 using StargateAPI.Controllers;
@@ -23,11 +24,19 @@ namespace StargateAPI.Business.Queries
         {
             var result = new GetPersonByNameResult();
 
-            var query = $"SELECT a.Id as PersonId, a.Name, b.CurrentRank, b.CurrentDutyTitle, b.CareerStartDate, b.CareerEndDate FROM [Person] a LEFT JOIN [AstronautDetail] b on b.PersonId = a.Id WHERE '{request.Name}' = a.Name";
+            var person = await _context.People
+                .Where(z => z.Name == request.Name)
+                .Select(p => new PersonAstronaut
+                {
+                    PersonId = p.Id,
+                    Name = p.Name,
+                    CurrentRank = p.AstronautDetail!.CurrentRank,
+                    CurrentDutyTitle = p.AstronautDetail!.CurrentDutyTitle,
+                    CareerStartDate = p.AstronautDetail!.CareerStartDate,
+                    CareerEndDate = p.AstronautDetail.CareerEndDate
+                }).FirstOrDefaultAsync();
 
-            var person = await _context.Connection.QueryAsync<PersonAstronaut>(query);
-
-            result.Person = person.FirstOrDefault();
+            result.Person = person;
 
             return result;
         }
