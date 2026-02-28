@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
+using StargateAPI.Business.Exceptions;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Queries
@@ -35,6 +36,9 @@ namespace StargateAPI.Business.Queries
                     CareerStartDate = p.AstronautDetail!.CareerStartDate,
                     CareerEndDate = p.AstronautDetail.CareerEndDate
                 }).FirstOrDefaultAsync();
+
+            if (person is null) 
+                throw new NotFoundException("No such person");
 
             result.Person = person;
 

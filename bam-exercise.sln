@@ -1,10 +1,12 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{D82C56D6-B2CD-F611-9E31-04638F7EC30E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StargateAPI", "api\StargateAPI.csproj", "{A6F3EF00-2B4E-270C-D334-75B75A1544DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StargateAPI.Tests", "api.Tests\StargateAPI.Tests.csproj", "{5B0AC74A-AF46-4038-B0CD-3378525D7913}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,6 +18,10 @@ Global
 		{A6F3EF00-2B4E-270C-D334-75B75A1544DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6F3EF00-2B4E-270C-D334-75B75A1544DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6F3EF00-2B4E-270C-D334-75B75A1544DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B0AC74A-AF46-4038-B0CD-3378525D7913}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B0AC74A-AF46-4038-B0CD-3378525D7913}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B0AC74A-AF46-4038-B0CD-3378525D7913}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B0AC74A-AF46-4038-B0CD-3378525D7913}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
