@@ -18,13 +18,17 @@ namespace StargateAPI.Business.Commands
         {
             _context = context;
         }
-        public Task Process(CreatePerson request, CancellationToken cancellationToken)
+        public async Task Process(CreatePerson request, CancellationToken cancellationToken)
         {
-            var person = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
+            // Basic validation for Name
+            if (string.IsNullOrWhiteSpace(request.Name)) 
+                throw new BadHttpRequestException("Name is required");
+            if (request.Name.Length > 200) 
+                throw new BadHttpRequestException("Name cannot exceed 200 characters");                
+
+            var person = await _context.People.AsNoTracking().FirstOrDefaultAsync(z => z.Name == request.Name);
 
             if (person is not null) throw new BadHttpRequestException("Duplicate person");
-
-            return Task.CompletedTask;
         }
     }
 

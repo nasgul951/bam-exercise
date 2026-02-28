@@ -1,4 +1,4 @@
-using System.Net;
+using StargateAPI.Business.Exceptions;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Middleware;
@@ -31,12 +31,19 @@ public class ExceptionMiddleware
         var statusCode = ex switch
         {
             BadHttpRequestException => StatusCodes.Status400BadRequest,
+            NotFoundException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
         
+        var message = default(string);
         if (statusCode == StatusCodes.Status500InternalServerError)
         {
             logger.LogError(ex, "Internal Server Error");
+            message = "Internal Server Error";
+        }
+        else
+        {
+            message = ex.Message;
         }
 
         context.Response.ContentType = "application/json";
@@ -44,7 +51,7 @@ public class ExceptionMiddleware
 
         var problem = new BaseResponse()
         {
-            Message = ex.Message,
+            Message = message,
             Success = false,
             ResponseCode = statusCode
         };

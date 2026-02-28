@@ -28,28 +28,37 @@ namespace StargateAPI.Business.Commands
             _context = context;
         }
 
-        public Task Process(CreateAstronautDuty request, CancellationToken cancellationToken)
+        public async Task Process(CreateAstronautDuty request, CancellationToken cancellationToken)
         {
-            var person = _context.People.AsNoTracking().FirstOrDefault(z => z.Name == request.Name);
+            // Basic validation for Name, Rank and DutyTitle
+            if (string.IsNullOrWhiteSpace(request.DutyTitle) 
+                || string.IsNullOrWhiteSpace(request.Rank) 
+                || string.IsNullOrWhiteSpace(request.Name))
+                    throw new BadHttpRequestException("Name, Rank and DutyTitle are required");
+            if (request.Rank.Length > 50) 
+                throw new BadHttpRequestException("Rank cannot exceed 50 characters");
+            if (request.DutyTitle.Length > 100) 
+                throw new BadHttpRequestException("DutyTitle cannot exceed 100 characters");
+                
+            var person = await _context.People.AsNoTracking().FirstOrDefaultAsync(z => z.Name == request.Name);
 
             if (person is null) throw new BadHttpRequestException("No such person");
 
-            var verifyNoPreviousDuty = _context.AstronautDuties.AsNoTracking()
-                .FirstOrDefault(z => z.DutyTitle == request.DutyTitle && z.DutyStartDate == request.DutyStartDate);
+            var isDuplicateDuty = await _context.AstronautDuties.AsNoTracking()
+                .AnyAsync(z => z.PersonId == person.Id && z.DutyTitle == request.DutyTitle && z.DutyStartDate == request.DutyStartDate);
 
-            if (verifyNoPreviousDuty is not null) throw new BadHttpRequestException("Duplicate duty assignment");
+            if (isDuplicateDuty) throw new BadHttpRequestException("Duplicate duty assignment");
 
-            var verifyStartDate = _context.AstronautDuties.AsNoTracking()
+            var verifyStartDate = await _context.AstronautDuties.AsNoTracking()
                 .Where(z => z.PersonId == person.Id)
                 .OrderByDescending(z => z.DutyStartDate)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
             if (verifyStartDate != null && verifyStartDate.DutyStartDate >= request.DutyStartDate)
             {
                 throw new BadHttpRequestException("Start date must be after current duty start date");
             }
 
-            return Task.CompletedTask;
         }
     }
 

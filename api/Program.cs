@@ -21,6 +21,8 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
 });
 
+builder.Services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(StargateAPI.Business.Common.PaginationValidationBehavior<,>));
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();

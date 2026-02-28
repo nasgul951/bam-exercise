@@ -18,11 +18,14 @@ namespace StargateAPI.Controllers
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetPeople()
+        public async Task<IActionResult> GetPeople(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var result = await _mediator.Send(new GetPeople()
+            var result = await _mediator.Send(new GetPeople
             {
-
+                PageNumber = pageNumber,
+                PageSize = pageSize
             });
 
             return this.GetResponse(result);

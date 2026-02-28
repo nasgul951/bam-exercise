@@ -1,20 +1,19 @@
-﻿using Dapper;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using MediatR;
+using StargateAPI.Business.Common;
 using StargateAPI.Business.Data;
 using StargateAPI.Business.Dtos;
 using StargateAPI.Controllers;
 
 namespace StargateAPI.Business.Queries
 {
-    public class GetPeople : IRequest<GetPeopleResult>
+    public class GetPeople : PagedRequest, IRequest<GetPeopleResult>
     {
 
     }
 
     public class GetPeopleHandler : IRequestHandler<GetPeople, GetPeopleResult>
     {
-        public readonly StargateContext _context;
+        private readonly StargateContext _context;
         public GetPeopleHandler(StargateContext context)
         {
             _context = context;
@@ -33,7 +32,7 @@ namespace StargateAPI.Business.Queries
                 CareerEndDate = p.AstronautDetail.CareerEndDate
             });
 
-            result.People = await people.ToListAsync();
+            result.People = await people.ToPagedListAsync(request.PageNumber, request.PageSize, cancellationToken);
 
             return result;
         }
@@ -41,7 +40,7 @@ namespace StargateAPI.Business.Queries
 
     public class GetPeopleResult : BaseResponse
     {
-        public List<PersonAstronaut> People { get; set; } = new List<PersonAstronaut> { };
+        public PagedResult<PersonAstronaut> People { get; set; } = new PagedResult<PersonAstronaut>();
 
     }
 }
