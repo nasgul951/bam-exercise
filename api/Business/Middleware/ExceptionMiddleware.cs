@@ -1,3 +1,5 @@
+using StargateAPI.Business.Common;
+using StargateAPI.Business.Data;
 using StargateAPI.Business.Exceptions;
 using StargateAPI.Controllers;
 
@@ -26,7 +28,7 @@ public class ExceptionMiddleware
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception ex, ILogger logger)
+    private static async Task HandleExceptionAsync(HttpContext context, Exception ex, ILogger logger)
     {
         var statusCode = ex switch
         {
@@ -34,8 +36,8 @@ public class ExceptionMiddleware
             NotFoundException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
-        
-        var message = default(string);
+
+        string message = String.Empty;
         if (statusCode == StatusCodes.Status500InternalServerError)
         {
             logger.LogError(ex, "Internal Server Error");
@@ -45,6 +47,18 @@ public class ExceptionMiddleware
         {
             message = ex.Message;
         }
+
+        try
+        {
+            var db = context.RequestServices.GetService<StargateContext>();
+            if (db is not null)
+            {
+                var level = statusCode == StatusCodes.Status500InternalServerError ? LogLevels.Error : LogLevels.Warning;
+                db.AddLog(level, nameof(ExceptionMiddleware), message ?? string.Empty, ex);
+                await db.SaveChangesAsync();
+            }
+        }
+        catch { /* swallow — never let logging failure break error handling */ }
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
@@ -56,6 +70,6 @@ public class ExceptionMiddleware
             ResponseCode = statusCode
         };
 
-        return context.Response.WriteAsJsonAsync(problem);
+        await context.Response.WriteAsJsonAsync(problem);
     }
 }

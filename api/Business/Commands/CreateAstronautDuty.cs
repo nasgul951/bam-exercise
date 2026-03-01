@@ -2,6 +2,7 @@
 using MediatR;
 using MediatR.Pipeline;
 using Microsoft.EntityFrameworkCore;
+using StargateAPI.Business.Common;
 using StargateAPI.Business.Data;
 using StargateAPI.Controllers;
 using System.Net;
@@ -127,6 +128,8 @@ namespace StargateAPI.Business.Commands
             };
 
             await _context.AstronautDuties.AddAsync(newAstronautDuty);
+            _context.AddLog(LogLevels.Information, nameof(CreateAstronautDutyHandler),
+                $"Duty created for {request.Name}: {request.DutyTitle} ({request.Rank})");
 
             await _context.SaveChangesAsync();
 

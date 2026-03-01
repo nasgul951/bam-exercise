@@ -9,6 +9,24 @@ namespace StargateAPI.Business.Data
         public DbSet<Person> People { get; set; }
         public DbSet<AstronautDetail> AstronautDetails { get; set; }
         public DbSet<AstronautDuty> AstronautDuties { get; set; }
+        public DbSet<LogEntry> LogEntries { get; set; }
+
+        /// <summary>
+        /// Stages a LogEntry in the change tracker. The caller must call SaveChangesAsync
+        /// to persist it (allowing atomic commits with business data).
+        /// </summary>
+        public void AddLog(string logLevel, string category, string message,
+            Exception? exception = null)
+        {
+            LogEntries.Add(new LogEntry
+            {
+                Category  = category,
+                LogLevel  = logLevel,
+                Message   = message,
+                Exception = exception?.ToString(),
+                Timestamp = DateTime.UtcNow
+            });
+        }
 
         public StargateContext(DbContextOptions<StargateContext> options)
         : base(options)

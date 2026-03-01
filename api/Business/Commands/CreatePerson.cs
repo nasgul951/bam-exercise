@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using MediatR.Pipeline;
 using Microsoft.EntityFrameworkCore;
+using StargateAPI.Business.Common;
 using StargateAPI.Business.Data;
 using StargateAPI.Controllers;
 
@@ -49,6 +50,8 @@ namespace StargateAPI.Business.Commands
                 };
 
                 await _context.People.AddAsync(newPerson);
+                _context.AddLog(LogLevels.Information, nameof(CreatePersonHandler),
+                    $"Person created: {request.Name}");
 
                 await _context.SaveChangesAsync();
 
