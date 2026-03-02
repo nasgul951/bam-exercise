@@ -55,7 +55,7 @@ namespace StargateAPI.Business.Commands
                 .OrderByDescending(z => z.DutyStartDate)
                 .FirstOrDefaultAsync();
 
-            if (verifyStartDate != null && verifyStartDate.DutyStartDate >= request.DutyStartDate)
+            if (verifyStartDate != null && verifyStartDate.DutyStartDate > request.DutyStartDate)
             {
                 throw new BadHttpRequestException("Start date must be after current duty start date");
             }
