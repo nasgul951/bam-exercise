@@ -54,8 +54,8 @@ namespace StargateAPI.Business.Commands
                 .Where(z => z.PersonId == person.Id)
                 .OrderByDescending(z => z.DutyStartDate)
                 .FirstOrDefaultAsync();
-
-            if (verifyStartDate != null && verifyStartDate.DutyStartDate > request.DutyStartDate)
+            // new duty start date must be at least 1 day after current duty start date.
+            if (verifyStartDate != null && verifyStartDate.DutyStartDate.AddDays(1) >= request.DutyStartDate)
             {
                 throw new BadHttpRequestException("Start date must be after current duty start date");
             }

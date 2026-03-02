@@ -12,9 +12,35 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AstronautDutyService } from '../../../core/services/astronaut-duty.service';
 import { PersonAstronaut } from '../../../shared/models/person.model';
 import { AstronautDuty } from '../../../shared/models/astronaut-duty.model';
+
+// ── Retirement confirmation dialog ────────────────────────────────────────────
+@Component({
+  selector: 'app-retire-confirm-dialog',
+  standalone: true,
+  imports: [MatDialogModule, MatButtonModule],
+  template: `
+    <h2 mat-dialog-title>Retire Astronaut</h2>
+    <mat-dialog-content>
+      <p>Are you sure you want to retire <strong>{{ data.name }}</strong>?</p>
+      <p class="text-sm text-gray-500 mt-1">
+        A new duty of <strong>RETIRED</strong> will be submitted with today's date
+        and their current rank of <strong>{{ data.rank }}</strong>.
+      </p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancel</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="true">Retire</button>
+    </mat-dialog-actions>
+  `,
+})
+export class RetireConfirmDialog {
+  readonly data: { name: string; rank: string } = inject(MAT_DIALOG_DATA);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-person-detail',
@@ -31,6 +57,7 @@ import { AstronautDuty } from '../../../shared/models/astronaut-duty.model';
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
   ],
   template: `
     <button mat-button (click)="back()" class="mb-4">
@@ -51,6 +78,18 @@ import { AstronautDuty } from '../../../shared/models/astronaut-duty.model';
           <div><span class="font-medium">Career Start:</span> {{ person.careerStartDate ? (person.careerStartDate | date:'mediumDate') : '—' }}</div>
           <div><span class="font-medium">Career End:</span> {{ person.careerEndDate ? (person.careerEndDate | date:'mediumDate') : '—' }}</div>
         </mat-card-content>
+        @if (canRetire) {
+          <mat-card-actions>
+            <button mat-stroked-button color="warn" (click)="openRetireDialog()" [disabled]="retiring">
+              @if (retiring) {
+                <mat-spinner diameter="18" class="inline-block mr-1" />
+              } @else {
+                <mat-icon>flight_land</mat-icon>
+              }
+              Retire Astronaut
+            </button>
+          </mat-card-actions>
+        }
       </mat-card>
 
       <h2 class="text-xl font-semibold mb-2">Astronaut Duties</h2>
@@ -80,59 +119,60 @@ import { AstronautDuty } from '../../../shared/models/astronaut-duty.model';
         }
       </div>
 
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Add New Duty</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="dutyForm" (ngSubmit)="submitDuty()" class="grid grid-cols-2 gap-4 pt-2">
-            <mat-form-field appearance="outline">
-              <mat-label>Rank</mat-label>
-              <input matInput formControlName="rank" maxlength="50" />
-              @if (dutyForm.get('rank')?.hasError('required') && dutyForm.get('rank')?.touched) {
-                <mat-error>Rank is required</mat-error>
-              }
-              @if (dutyForm.get('rank')?.hasError('maxlength')) {
-                <mat-error>Rank cannot exceed 50 characters</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Duty Title</mat-label>
-              <input matInput formControlName="dutyTitle" maxlength="100" />
-              @if (dutyForm.get('dutyTitle')?.hasError('required') && dutyForm.get('dutyTitle')?.touched) {
-                <mat-error>Duty title is required</mat-error>
-              }
-              @if (dutyForm.get('dutyTitle')?.hasError('maxlength')) {
-                <mat-error>Duty title cannot exceed 100 characters</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Start Date</mat-label>
-              <input matInput [matDatepicker]="picker" formControlName="dutyStartDate" />
-              <mat-datepicker-toggle matIconSuffix [for]="picker" />
-              <mat-datepicker #picker />
-              @if (dutyForm.get('dutyStartDate')?.hasError('required') && dutyForm.get('dutyStartDate')?.touched) {
-                <mat-error>Start date is required</mat-error>
-              }
-            </mat-form-field>
-
-            <div class="flex items-center gap-2">
-              <button mat-raised-button color="primary" type="submit" [disabled]="submitting">
-                @if (submitting) {
-                  <mat-spinner diameter="18" class="inline-block mr-1" />
-                }
-                Add Duty
-              </button>
-            </div>
-
+      @if(!isRetired) {
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Add New Duty</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
             @if (dutyError) {
               <p class="col-span-2 text-red-600 text-sm">{{ dutyError }}</p>
             }
-          </form>
-        </mat-card-content>
-      </mat-card>
+            <form [formGroup]="dutyForm" (ngSubmit)="submitDuty()" class="grid grid-cols-2 gap-4 pt-2">
+              <mat-form-field appearance="outline">
+                <mat-label>Rank</mat-label>
+                <input matInput formControlName="rank" />
+                @if (dutyForm.get('rank')?.hasError('required') && dutyForm.get('rank')?.touched) {
+                  <mat-error>Rank is required</mat-error>
+                }
+                @if (dutyForm.get('rank')?.hasError('maxlength')) {
+                  <mat-error>Rank cannot exceed 50 characters</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Duty Title</mat-label>
+                <input matInput formControlName="dutyTitle" />
+                @if (dutyForm.get('dutyTitle')?.hasError('required') && dutyForm.get('dutyTitle')?.touched) {
+                  <mat-error>Duty title is required</mat-error>
+                }
+                @if (dutyForm.get('dutyTitle')?.hasError('maxlength')) {
+                  <mat-error>Duty title cannot exceed 100 characters</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Start Date</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="dutyStartDate" />
+                <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                <mat-datepicker #picker />
+                @if (dutyForm.get('dutyStartDate')?.hasError('required') && dutyForm.get('dutyStartDate')?.touched) {
+                  <mat-error>Start date is required</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="flex items-center">
+                <button mat-raised-button color="primary" type="submit" [disabled]="submitting">
+                  @if (submitting) {
+                    <mat-spinner diameter="18" class="inline-block mr-1" />
+                  }
+                  Add Duty
+                </button>
+              </div>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      }
     }
   `,
 })
@@ -142,14 +182,24 @@ export class PersonDetailComponent implements OnInit {
   private readonly dutyService = inject(AstronautDutyService);
   private readonly fb = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   person: PersonAstronaut | null = null;
   duties: AstronautDuty[] = [];
   dutyColumns = ['rank', 'dutyTitle', 'dutyStartDate', 'dutyEndDate'];
   loading = false;
   submitting = false;
+  retiring = false;
   dutyError = '';
   private personName = '';
+
+  get canRetire(): boolean {
+    return !!this.person?.currentRank && this.person.currentDutyTitle !== 'RETIRED';
+  }
+
+  get isRetired(): boolean {
+    return this.person?.currentDutyTitle === 'RETIRED';
+  }
 
   dutyForm = this.fb.group({
     rank: ['', [Validators.required, Validators.maxLength(50)]],
@@ -177,6 +227,41 @@ export class PersonDetailComponent implements OnInit {
     });
   }
 
+  openRetireDialog(): void {
+    this.dialog
+      .open(RetireConfirmDialog, {
+        width: '420px',
+        data: { name: this.person!.name, rank: this.person!.currentRank },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (confirmed) this.retireAstronaut();
+      });
+  }
+
+  retireAstronaut(): void {
+    this.retiring = true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    this.dutyService.createDuty({
+      name: this.personName,
+      rank: this.person!.currentRank!, // canRetire getter ensures currentRank is not null
+      dutyTitle: 'RETIRED',
+      dutyStartDate: today.toISOString(),
+    }).subscribe({
+      next: () => {
+        this.retiring = false;
+        this.snackBar.open('Astronaut retired successfully', 'Close', { duration: 3000 });
+        this.loadData();
+      },
+      error: (err) => {
+        this.retiring = false;
+        this.snackBar.open(err?.error?.message ?? 'Failed to retire astronaut', 'Close', { duration: 5000 });
+      },
+    });
+  }
+
   submitDuty(): void {
     if (this.dutyForm.invalid) {
       this.dutyForm.markAllAsTouched();
@@ -185,13 +270,12 @@ export class PersonDetailComponent implements OnInit {
     this.submitting = true;
     this.dutyError = '';
     const { rank, dutyTitle, dutyStartDate } = this.dutyForm.value;
-    const payload = {
+    this.dutyService.createDuty({
       name: this.personName,
       rank: rank!,
       dutyTitle: dutyTitle!,
       dutyStartDate: (dutyStartDate as Date).toISOString(),
-    };
-    this.dutyService.createDuty(payload).subscribe({
+    }).subscribe({
       next: () => {
         this.submitting = false;
         this.snackBar.open('Duty added successfully', 'Close', { duration: 3000 });

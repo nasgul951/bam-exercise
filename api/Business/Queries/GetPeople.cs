@@ -22,7 +22,9 @@ namespace StargateAPI.Business.Queries
         {
             var result = new GetPeopleResult();
 
-            var people = _context.People.Select(p => new PersonAstronaut
+            var people = _context.People
+            .OrderBy(p => p.Id)
+            .Select(p => new PersonAstronaut
             {
                 PersonId = p.Id,
                 Name = p.Name,

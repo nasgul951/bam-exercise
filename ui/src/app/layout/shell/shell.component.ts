@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,13 +21,18 @@ import { AuthService } from '../../core/auth/auth.service';
   ],
   template: `
     <mat-sidenav-container class="h-screen">
-      <mat-sidenav mode="side" opened class="w-56 p-2">
+      <mat-sidenav
+        #sidenav
+        [mode]="isMobile ? 'over' : 'side'"
+        [opened]="!isMobile"
+        class="w-56 p-2"
+      >
         <mat-nav-list>
-          <a mat-list-item routerLink="/persons" routerLinkActive="bg-indigo-100">
+          <a mat-list-item routerLink="/persons" routerLinkActive="bg-indigo-100" (click)="closeSidenavOnMobile()">
             <mat-icon matListItemIcon>people</mat-icon>
             <span matListItemTitle>Persons</span>
           </a>
-          <a mat-list-item routerLink="/logs" routerLinkActive="bg-indigo-100">
+          <a mat-list-item routerLink="/logs" routerLinkActive="bg-indigo-100" (click)="closeSidenavOnMobile()">
             <mat-icon matListItemIcon>list_alt</mat-icon>
             <span matListItemTitle>Logs</span>
           </a>
@@ -35,7 +41,14 @@ import { AuthService } from '../../core/auth/auth.service';
 
       <mat-sidenav-content class="flex flex-col">
         <mat-toolbar color="primary" class="flex justify-between">
-          <span>Stargate</span>
+          <div class="flex items-center gap-2">
+            @if (isMobile) {
+              <button mat-icon-button (click)="sidenav.toggle()" aria-label="Toggle navigation">
+                <mat-icon>menu</mat-icon>
+              </button>
+            }
+            <span>Stargate</span>
+          </div>
           <button mat-button (click)="logout()">
             <mat-icon>logout</mat-icon>
             Logout
@@ -48,8 +61,27 @@ import { AuthService } from '../../core/auth/auth.service';
     </mat-sidenav-container>
   `,
 })
-export class ShellComponent {
+export class ShellComponent implements OnInit {
+  @ViewChild('sidenav') sidenav!: MatSidenav;
+
   private readonly authService = inject(AuthService);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  isMobile = false;
+
+  ngOnInit(): void {
+    this.breakpointObserver
+      .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])
+      .subscribe(result => {
+        this.isMobile = result.matches;
+      });
+  }
+
+  closeSidenavOnMobile(): void {
+    if (this.isMobile) {
+      this.sidenav.close();
+    }
+  }
 
   logout(): void {
     this.authService.logout();

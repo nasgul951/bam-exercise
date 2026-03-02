@@ -27,7 +27,7 @@ import { PersonService } from '../../../core/services/person.service';
       <form [formGroup]="form" class="flex flex-col gap-2 pt-2">
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
-          <input matInput formControlName="name" maxlength="200" />
+          <input matInput formControlName="name" />
           @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
             <mat-error>Name is required</mat-error>
           }
