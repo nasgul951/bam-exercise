@@ -47,7 +47,7 @@ import { AuthService } from '../../core/auth/auth.service';
                 <mat-icon>menu</mat-icon>
               </button>
             }
-            <span>Stargate</span>
+            <span>ACTS Database</span>
           </div>
           <button mat-button (click)="logout()">
             <mat-icon>logout</mat-icon>
